@@ -1,3 +1,28 @@
+# Angel or Devil
+
+A soft glowing line splits the picture, and you, in half. On one side is heaven: a white-gold sky
+with light rays and drifting feathers, a warm golden light on your skin, a golden halo and a white
+wing. On the other is hell: a red-black fire glow with rising embers and heat shimmer, a red rim
+light, a devil horn, devil fangs and a bat wing. Tilt your head toward a side and it grows across
+you; hold a full tilt for a second and that side takes over with a burst of feathers or flames.
+Straighten up and you are half and half again. No camera tilt? Tap a side to grow it, double-tap
+to recentre.
+
+- The line (`src/split/split.ts`) is read by everything: the backgrounds and skin lights
+  (`World.tsx`, one full-screen pass with the portrait mask), the feathers and embers
+  (`Particles.tsx`), the seam itself (`Seam.tsx`) and the pieces you wear, each clipped to its side.
+- The halo, dark halo and horns are vincentt.studio head accessories on the SDK's canonical head
+  fit with the head occluder; the wings sit on the shoulders behind you (`Wings.tsx`); the fangs
+  are made in code and ride your lips (`Fangs.tsx`).
+- Tilt, takeovers and taps: `tilt.sim.ts` (unit-tested) and `Control.tsx`. The start hint is a
+  small ghost head tilting side to side (`TiltHint.tsx`).
+- Models: `public/models/vincentt-*.glb` (`src/split/outfit.ts`). Credits in `CREDITS.md`.
+- Dev preview without a camera: the media switcher starts on the SDK's sample video; arrow keys
+  nudge the line, 0 recentres, `[` / `]` fake a head tilt, `\` lets go, O holds the mouth open.
+  How it works: `PLAN.md`.
+
+---
+
 # v2-template
 
 The Vincentt starter app: a real React + R3F + Vincentt XR SDK (`@vincentt-xr/sdk`)
