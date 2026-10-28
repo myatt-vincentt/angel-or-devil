@@ -16,7 +16,7 @@ import type { Texture } from "three";
 import { usePersonMaskTexture } from "@vincentt-xr/sdk";
 import { useXRCameraTexture } from "@vincentt-xr/sdk/low-level";
 
-import { glideSplit, shared, split } from "./split";
+import { shared } from "./split";
 
 const LOOK = {
   /** Heaven sky: top, low, and the sun's warm glow (top-left corner). */
@@ -162,7 +162,14 @@ const fragmentShader = /* glsl */ `
     // 0 on the heaven side, 1 on the hell side, soft across the line.
     float side = smoothstep(-blend, blend, (vUv.x - splitX) * aspect);
 
-    vec3 room = mix(heaven(p, vUv), hell(p, vUv), side);
+    // Heaven deepens a little behind you, so white wings and your outline
+    // stand out against the bright sky.
+    float aura = hasMask > 0.5
+      ? clamp(ring(vUv, 45.0) * 0.6 + ring(vUv, 90.0) * 0.6, 0.0, 1.0)
+      : 0.0;
+    vec3 sky = heaven(p, vUv);
+    sky = mix(sky, sky * vec3(0.66, 0.72, 0.9), aura * 0.75);
+    vec3 room = mix(sky, hell(p, vUv), side);
 
     float m = person(vUv);
     // How near your outline a point on you is (0 deep inside, 1 at the edge).
@@ -219,11 +226,8 @@ export const World = () => {
     }),
     [],
   );
-  // First of the frame: the line and the shared mask are current before
-  // anything reads them.
-  useFrame((state, dt) => {
-    split.x = glideSplit(split.x, split.target, dt);
-    shared.split.value = split.x;
+  // Early in the frame: the shared mask is current before anything reads it.
+  useFrame((state) => {
     shared.mask.value = (maskTexture as Texture | null) ?? null;
     state.gl.getDrawingBufferSize(shared.size.value);
     uniforms.time.value = state.clock.elapsedTime;

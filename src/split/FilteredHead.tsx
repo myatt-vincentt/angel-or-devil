@@ -9,6 +9,8 @@
 // the depth-only v3 head occluder and the items: they can't drift apart.
 // Children are in canonical centimetres.
 //
+// It also reports the head's tilt on screen and where the head is (live.ts).
+//
 // The neck bust is the SDK's NeckOccluder (its own fit, with the neck bend
 // that keeps the shoulders level); it only hides what hangs behind the neck.
 import { useMemo, useRef, useState, type ReactNode } from "react";
@@ -29,6 +31,7 @@ import { FaceTracker } from "@vincentt-xr/sdk/tracking";
 
 import { NECK_OCCLUDER_URL, OCCLUDER_URL } from "./outfit";
 import { HeadFilter, type HeadPose } from "./headFilter";
+import { live } from "./live";
 
 /** Face inference rate: the filter fills the frames between. */
 export const FACE_FPS = 20;
@@ -110,6 +113,9 @@ export const FilteredHead = ({
   onFace?: ReactNode;
 }) => {
   const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  const up = useMemo(() => new Vector3(), []);
+  const at = useMemo(() => new Vector3(), []);
   const filter = useMemo(() => new HeadFilter(), []);
   const head = useRef<Group>(null);
   const [tracked, setTracked] = useState(false);
@@ -128,10 +134,19 @@ export const FilteredHead = ({
       ? filter.sample(performance.now() / 1000, out.current)
       : null;
     g.visible = !!p;
-    if (!p) return;
+    if (!p) {
+      live.roll = null;
+      return;
+    }
     g.position.copy(p.position);
     g.quaternion.copy(p.quaternion);
     g.scale.setScalar(p.scale);
+    // The tilt as it looks on screen: the head's up, seen from the camera.
+    up.set(0, 1, 0).applyQuaternion(p.quaternion);
+    live.roll = (Math.atan2(-up.x, up.y) * 180) / Math.PI;
+    at.copy(p.position).project(camera);
+    live.head.x = at.x;
+    live.head.y = at.y;
   });
 
   return (

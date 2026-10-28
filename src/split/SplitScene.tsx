@@ -2,26 +2,38 @@
 // Left of it is heaven (a white-gold sky, light rays, drifting feathers, a
 // warm golden light on you, a halo and a white wing); right of it is hell
 // (a red-black glow, rising embers, heat shimmer, a red rim light on you,
-// a horn, a dark halo, a fang and a bat wing). Every piece reads the same line
-// (split.ts), so when it moves, the whole picture follows.
-import { useEffect, useRef } from "react";
+// a horn, a dark halo, devil fangs and a bat wing). Every piece reads the
+// same line (split.ts), so when it moves, the whole picture follows. Tilt
+// your head toward a side and it grows across you; hold a full tilt and it
+// takes over (Control.tsx, tilt.sim.ts, Burst.tsx); taps nudge the line.
+import { Suspense, useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { PMREMGenerator } from "three";
 // eslint-disable-next-line import/extensions
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { useFaceInfo } from "@vincentt-xr/sdk/tracking";
 
+import { Burst } from "./Burst";
+import { Control } from "./Control";
+import { Fangs } from "./Fangs";
 import { FACE_FPS, FilteredHead } from "./FilteredHead";
 import { live } from "./live";
 import { FRAME, HEAD } from "./outfit";
 import { Part } from "./Part";
 import { Particles } from "./Particles";
 import { Seam } from "./Seam";
+import { TiltHint } from "./TiltHint";
 import { Wings } from "./Wings";
 import { World } from "./World";
 
 /** The blendshapes the pieces' face triggers read (see rig.ts). */
-const FACE_INPUTS = ["jawOpen", "mouthSmileLeft", "mouthSmileRight"];
+const FACE_INPUTS = [
+  "jawOpen",
+  "mouthSmileLeft",
+  "mouthSmileRight",
+  "browDownLeft",
+  "browDownRight",
+];
 /** Per-second easing of the readings (higher = snappier, noisier). */
 const FACE_EASE = 14;
 
@@ -66,6 +78,7 @@ export const SplitScene = () => {
   useStudioLight();
   return (
     <>
+      <Control />
       <World />
       <Particles />
       {/* Heaven's sun from the top left, hell's fire from the lower right. */}
@@ -83,7 +96,7 @@ export const SplitScene = () => {
       />
       <Wings />
       <FaceSignals />
-      <FilteredHead>
+      <FilteredHead onFace={<Fangs />}>
         <group
           name="split-head-frame"
           scale={FRAME.scale}
@@ -94,7 +107,11 @@ export const SplitScene = () => {
           ))}
         </group>
       </FilteredHead>
+      <Burst />
       <Seam />
+      <Suspense fallback={null}>
+        <TiltHint />
+      </Suspense>
     </>
   );
 };

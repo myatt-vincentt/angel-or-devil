@@ -12,7 +12,16 @@ A soft glowing line splits the picture, and you, in half: half angel, half devil
   halo and a white feathered wing.
 - Right of the line is hell: deep red-black, a fire glow behind jagged rocks, smoke, rising
   embers, everything wavering in the heat. A red rim light runs along your outline. You wear a
-  red horn, the dark half of the halo, a devil fang and a red bat wing.
+  red horn, the dark half of the halo, devil fangs and a red bat wing.
+- Tilt your head toward a side and that side grows across you (lean toward heaven, more of you
+  is angel). A small dead zone keeps wobbles still; about 25° reaches an extreme; upright, the
+  line drifts back to the middle.
+- Hold a full tilt about a second and that side takes over: the line sweeps off the edge with a
+  burst (heaven: a white-gold flash and a puff of feathers; hell: a flame flare and a burst of
+  embers). Straighten up and the line comes back.
+- Taps: a tap nudges the line toward the side you tap; a double tap recentres it.
+- Hint: at the start, a small ghost head on a glass disc tilts side to side, the rim warming gold
+  or red. It goes for good after your first real tilt. No text.
 - Both outfits are worn at once and each is clipped to its own side, so moving the line changes
   how much of you is which. Everything follows the line: backgrounds, lights, particles and the
   pieces you wear.
@@ -27,13 +36,14 @@ A soft glowing line splits the picture, and you, in half: half angel, half devil
 - `Particles.tsx`: feathers and embers in screen space, behind you. `Seam.tsx`: the line itself,
   on top of everything.
 - `FilteredHead.tsx` + `Part.tsx`: the head pieces on the SDK's canonical head fit, steadied by
-  a spring, with the head occluder. The fangs follow the open mouth (the model's face triggers,
-  `rig.ts`).
+  a spring, with the head occluder; the models' own face triggers play too (`rig.ts`). The
+  filtered head also reports its tilt on screen.
+- `tilt.sim.ts` (unit-tested) + `Control.tsx`: tilt, takeovers and taps → where the line goes.
+  `Burst.tsx`: the takeover bursts. `TiltHint.tsx`: the hint.
+- `Fangs.tsx` + `fangShape.ts`: the devil fangs, made in code, placed every frame on lip
+  landmarks from the SDK's face rig (upper pair on the upper lip, lower pair on the jaw).
 - `Wings.tsx`: the wings on the SDK's canonical torso frame (fitted to the shoulders), hidden
   behind you by the portrait mask.
-- Dev only: ← / → move the line, 0 recentres it, O holds the mouth open; `window.__split` is
-  the line.
-
-## Next
-
-Step 2: tilting the head pushes the line across you.
+- Dev only: ← / → nudge the line, 0 recentres it, [ / ] fake a head tilt in 5° steps, \ lets
+  go of it, O holds the mouth open for the models' face triggers; `window.__split` is the line
+  (`x`, `target`, `roll`, `takeover`, and `fakeRoll` to fake a tilt).

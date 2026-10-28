@@ -11,23 +11,29 @@ export const SPLIT = {
   min: 0.1,
   max: 0.9,
   step: 0.05,
-  /** How quickly the line glides to where it is sent (per second, ease-out). */
-  glide: 7,
 };
 
+/** The line, as the controls (Control.tsx) leave it each frame. */
 export const split = {
-  /** Where the line is drawn now. */
+  /** Where the line is drawn now (past 0 or 1 in a takeover). */
   x: SPLIT.centre,
   /** Where it is gliding to. */
   target: SPLIT.centre,
+  /** The head tilt in use (degrees, + leans toward the left), or null. */
+  roll: null as number | null,
+  /** The side that has taken over, or null. */
+  takeover: null as Side | null,
+  /** Dev only: stands in for the head tilt (degrees), for clip audits. */
+  fakeRoll: null as number | null,
 };
 
-export const clampSplit = (x: number) =>
-  Math.min(SPLIT.max, Math.max(SPLIT.min, x));
-
 /** One frame of the glide toward the target: exponential, no overshoot. */
-export const glideSplit = (x: number, target: number, dt: number) =>
-  x + (target - x) * (1 - Math.exp(-SPLIT.glide * Math.min(dt, 0.1)));
+export const glideSplit = (
+  x: number,
+  target: number,
+  rate: number,
+  dt: number,
+) => x + (target - x) * (1 - Math.exp(-rate * Math.min(dt, 0.1)));
 
 /** Shared by every shader that reads the line or the portrait mask. */
 export const shared = {
@@ -77,9 +83,10 @@ ${behindPerson ? "if (texture2D(personMask, gl_FragCoord.xy / personMaskSize).g 
       );
     /* eslint-enable no-param-reassign */
   };
+  const key = material.customProgramCacheKey.bind(material);
   // eslint-disable-next-line no-param-reassign
   material.customProgramCacheKey = () =>
-    `split-${side}${behindPerson ? "-behind" : ""}`;
+    `${key()}|split-${side}${behindPerson ? "-behind" : ""}`;
   // eslint-disable-next-line no-param-reassign
   material.needsUpdate = true;
 };

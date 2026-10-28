@@ -5,8 +5,8 @@
 // Reference - Spark AR" face frame (origin at the front of the face, +Y up,
 // +Z out of the face) — see FRAME.
 //   Heaven side: a golden halo and white feathered wings.
-//   Hell side: red horns, a dark halo (the other half of the ring), devil
-//   fangs and red bat wings.
+//   Hell side: red horns, a dark halo (the other half of the ring) and red
+//   bat wings. (The devil fangs are made in code: Fangs.tsx.)
 import type { Side } from "./split";
 
 export type Part = {
@@ -26,10 +26,6 @@ export type Part = {
   /** Tints and a soft glow by material name (on this part's own copies). */
   colors?: Record<string, string>;
   glow?: Record<string, string>;
-  /** Nodes stretched about their own origin, by name: [x, y, z]. */
-  stretch?: Record<string, [number, number, number]>;
-  /** Nodes left out, by name. */
-  hide?: string[];
 };
 
 /** On the head (FilteredHead). The two halos share one place. */
@@ -37,17 +33,6 @@ export const HEAD: readonly Part[] = [
   { id: "halo-angel", side: "angel", preset: "Golden" },
   { id: "halo-dark", side: "devil", preset: "Fallen" },
   { id: "horns-devil", side: "devil", preset: "Classic Red" },
-  // Devil fangs: longer than a vampire's, bone with a red flush and a faint
-  // fire glow, no smile glint. They show more as you open your mouth.
-  {
-    id: "mouth-vampire-fangs",
-    side: "devil",
-    preset: "Ivory",
-    colors: { mat_fangs: "#9c3a30" },
-    glow: { mat_fangs: "#580500" },
-    stretch: { attach_fangs_fangs_upper: [1.1, 1.35, 1.1] },
-    hide: ["attach_fangs_glint_anchor"],
-  },
 ];
 
 /** On the shoulders (Wings.tsx), behind you. */
@@ -56,6 +41,8 @@ export const WINGS: readonly Part[] = [
     id: "wings-angel",
     side: "angel",
     preset: "Golden",
+    // Warm ivory rather than paper white, so they read on the bright sky.
+    colors: { mat_feathers: "#e9dcc2" },
     behindPerson: true,
   },
   {

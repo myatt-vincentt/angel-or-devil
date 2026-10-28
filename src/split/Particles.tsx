@@ -8,6 +8,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { AdditiveBlending, BufferAttribute, BufferGeometry } from "three";
 
 import { shared } from "./split";
+import { SPRITES } from "./sprites";
 
 type Layer = {
   name: string;
@@ -87,6 +88,7 @@ const fragmentShader = /* glsl */ `
   varying float vSeed;
   varying float vAngle;
   varying float vLife;
+  ${SPRITES}
 
   void main() {
     vec2 frag = gl_FragCoord.xy / personMaskSize;
@@ -94,41 +96,17 @@ const fragmentShader = /* glsl */ `
     if (texture2D(personMask, frag).g > 0.5) discard;
     vec2 q = gl_PointCoord - 0.5;
     if (side < 0.5) {
-      // A feather: a slim curved vane with a fine quill down the middle.
-      float c = cos(vAngle);
-      float s = sin(vAngle);
-      q = vec2(c * q.x - s * q.y, s * q.x + c * q.y);
-      q.x += q.y * q.y * 0.5;
-      float along = q.y + 0.5;
-      float width = 0.2 * sin(clamp(along, 0.0, 1.0) * 3.1416)
-        * (0.75 + 0.25 * along);
-      float vane = smoothstep(width, width - 0.035, abs(q.x))
-        * step(0.05, along) * step(along, 0.98);
-      // Barbs: faint diagonal grooves.
-      float barbs = 0.88 + 0.12 * sin((abs(q.x) * 1.4 + q.y) * 70.0);
-      float quill = smoothstep(0.012, 0.0, abs(q.x)) * step(along, 1.0)
-        * step(-0.04, along);
-      float a = max(vane, quill * 0.9);
-      if (a <= 0.01) discard;
-      vec3 col = mix(vec3(1.0, 0.98, 0.94), vec3(0.9, 0.84, 0.72), quill);
-      // A soft warm shade along the vane's edge, so it reads on a bright sky.
-      col = mix(col, vec3(0.84, 0.76, 0.62),
-        smoothstep(width - 0.07, width, abs(q.x)) * 0.8);
-      col *= barbs;
+      vec4 f = feather(q, vAngle);
+      if (f.a <= 0.01) discard;
       // The ones nearer the sun catch a little gold.
-      col = mix(col, vec3(1.0, 0.9, 0.62), 0.25 * frag.y * (1.0 - frag.x));
-      gl_FragColor = vec4(col, a * alpha);
+      vec3 col = mix(f.rgb, vec3(1.0, 0.9, 0.62), 0.25 * frag.y * (1.0 - frag.x));
+      gl_FragColor = vec4(col, f.a * alpha);
     } else {
-      // An ember: a hot core with a soft glow, flickering, dying as it rises.
-      float d = length(q) * 2.0;
-      float flick = 0.6 + 0.4 * sin(time * (9.0 + vSeed * 7.0) + vSeed * 30.0);
+      // Dying as it rises.
       float fade = smoothstep(1.0, 0.55, vLife) * smoothstep(0.0, 0.08, vLife);
-      float core = smoothstep(0.45, 0.0, d);
-      float glow = smoothstep(1.0, 0.0, d) * 0.5;
-      float a = (core + glow) * flick * fade;
-      if (a <= 0.01) discard;
-      vec3 col = mix(vec3(1.0, 0.25, 0.04), vec3(1.0, 0.8, 0.35), core);
-      gl_FragColor = vec4(col * a * alpha, 1.0);
+      vec4 e = ember(q, vSeed, time) * fade;
+      if (e.a <= 0.01) discard;
+      gl_FragColor = vec4(e.rgb * alpha, 1.0);
     }
   }
 `;

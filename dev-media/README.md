@@ -6,7 +6,8 @@ production builds.
 
 You don't need anything here. Without a webcam, `pnpm dev` starts on the SDK's
 built-in "Person Looking" video and lists every SDK sample video and image. In
-development ← / → move the dividing line and 0 sends it back to the middle.
+development ← / → nudge the dividing line, 0 sends it back to the middle, and [ / ] fake a
+head tilt (the sample clips hardly tilt; \ lets go).
 
 To preview with your own clip, add it at `dev-media/clip.mp4` (H.264 MP4); it
 is listed first and used as the start. Clips here are git-ignored. Restart

@@ -114,7 +114,6 @@ const prepare = (
   part: PartSpec,
 ) => {
   const hidden = hiddenLooks(cfg);
-  part.hide?.forEach((n) => hidden.add(n));
   // Each part gets its own copies: the line's clip is per material.
   const own = new Map<Material, Material>();
   const copy = (m: Material) => {
@@ -139,8 +138,6 @@ const prepare = (
       o.visible = false;
       return;
     }
-    const stretch = part.stretch?.[o.name];
-    if (stretch) o.scale.multiply(new Vector3(...stretch));
     const m = o as Mesh;
     if (!m.isMesh) return;
     m.frustumCulled = false;
