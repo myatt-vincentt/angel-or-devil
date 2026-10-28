@@ -85,9 +85,19 @@ type CaptureCanvas = HTMLCanvasElement & {
  * the swap.
  */
 const streamFromClip = async (url: string) => {
+  // A cross-origin clip is fetched whole and played from a local blob URL.
+  // Some embedded preview browsers refuse a `crossOrigin` <video> from the
+  // CDN (its ranged requests come back without the CORS header there, so the
+  // load fails as "blocked by CORS"), while a plain fetch of the same file
+  // works. A blob is same-origin, so the canvas below stays readable.
+  const remote =
+    new URL(url, window.location.href).origin !== window.location.origin;
+  const blobUrl = remote
+    ? URL.createObjectURL(await (await fetch(url)).blob())
+    : null;
   const video = document.createElement("video");
-  video.crossOrigin = "anonymous";
-  video.src = url;
+  if (!blobUrl) video.crossOrigin = "anonymous";
+  video.src = blobUrl ?? url;
   video.loop = true;
   video.muted = true;
   video.playsInline = true;
@@ -119,6 +129,7 @@ const streamFromClip = async (url: string) => {
       stopped = true;
       cancelAnimationFrame(raf);
       video.pause();
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
     },
   };
 };

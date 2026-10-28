@@ -6,7 +6,8 @@
 // wobbles still; past it the tilt maps smoothly onto the line's range, about
 // 25° reaching an extreme. Hold a full tilt about a second and that side takes
 // over: the line sweeps off the edge (with a burst) until you straighten up.
-// Taps nudge the line toward the side you tap; a double tap recentres it.
+// A tap grows the side you tap, like leaning toward it (the line moves away
+// from the tap); a double tap recentres it.
 import type { Side } from "./split";
 
 export const TILT = {
@@ -99,8 +100,8 @@ export const tapSplit = (s: SplitState, x: number, now: number) => {
     return;
   }
   s.lastTap = now;
-  // The line moves toward the side you tap.
-  const dir = x < 0.5 ? -1 : 1;
+  // The side you tap grows: the line moves away from it.
+  const dir = x < 0.5 ? 1 : -1;
   s.nudge = clamp(s.nudge + dir * TILT.nudge, -TILT.maxNudge, TILT.maxNudge);
 };
 

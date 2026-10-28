@@ -26,6 +26,11 @@ export type Part = {
   /** Tints and a soft glow by material name (on this part's own copies). */
   colors?: Record<string, string>;
   glow?: Record<string, string>;
+  /**
+   * Wing root bones (their local +Z is the wing's face): each wing folds
+   * toward its root as it turns edge-on to the camera.
+   */
+  edgeOn?: string[];
 };
 
 /** On the head (FilteredHead). The two halos share one place. */
@@ -34,6 +39,9 @@ export const HEAD: readonly Part[] = [
   { id: "halo-dark", side: "devil", preset: "Fallen" },
   { id: "horns-devil", side: "devil", preset: "Classic Red" },
 ];
+
+/** Each wing's root bone (names as loaded: three drops the dots). */
+const WING_ROOTS = ["DEF_wing_1L", "DEF_wing_1R"];
 
 /** On the shoulders (Wings.tsx), behind you. */
 export const WINGS: readonly Part[] = [
@@ -44,12 +52,14 @@ export const WINGS: readonly Part[] = [
     // Warm ivory rather than paper white, so they read on the bright sky.
     colors: { mat_feathers: "#e9dcc2" },
     behindPerson: true,
+    edgeOn: WING_ROOTS,
   },
   {
     id: "wings-devil-bat",
     side: "devil",
     preset: "Devil Red",
     behindPerson: true,
+    edgeOn: WING_ROOTS,
   },
 ];
 

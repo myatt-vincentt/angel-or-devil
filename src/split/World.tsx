@@ -85,21 +85,29 @@ const fragmentShader = /* glsl */ `
     return v;
   }
 
-  // The mask blurred over a ring of the given radius (mask texels).
-  float ring(vec2 uv, float r) {
+  // The mask blurred over a ring of the given radius (mask texels): eight
+  // samples, turned by \`turn\` so two rings interleave into sixteen.
+  float ring(vec2 uv, float r, float turn) {
     float m = 0.0;
-    for (int i = 0; i < 10; i++) {
-      float a = float(i) * 0.6283;
+    for (int i = 0; i < 8; i++) {
+      float a = float(i) * 0.7854 + turn;
       m += texture2D(maskTexture, uv + vec2(cos(a), sin(a)) * texel * r).g;
     }
-    return m * 0.1;
+    return m * 0.125;
   }
 
-  // You, softened: the mask and a small ring, then a smooth step.
+  // The mask, smoothed: the segmenter's edge is stepped and speckled round
+  // hair and ears, so outlines read a soft blur of it, never the raw mask.
+  float soft(vec2 uv) {
+    return texture2D(maskTexture, uv).g * 0.2
+      + ring(uv, 2.5, 0.0) * 0.4
+      + ring(uv, 5.0, 0.3927) * 0.4;
+  }
+
+  // You, softened.
   float person(vec2 uv) {
     if (hasMask < 0.5) return 0.0;
-    float m = texture2D(maskTexture, uv).g * 0.3 + ring(uv, 3.0) * 0.7;
-    return smoothstep(0.45, 0.85, m);
+    return smoothstep(0.4, 0.8, soft(uv));
   }
 
   vec3 heaven(vec2 p, vec2 uv) {
@@ -165,16 +173,19 @@ const fragmentShader = /* glsl */ `
     // Heaven deepens a little behind you, so white wings and your outline
     // stand out against the bright sky.
     float aura = hasMask > 0.5
-      ? clamp(ring(vUv, 45.0) * 0.6 + ring(vUv, 90.0) * 0.6, 0.0, 1.0)
+      ? clamp(ring(vUv, 45.0, 0.0) * 0.6 + ring(vUv, 90.0, 0.3927) * 0.6, 0.0, 1.0)
       : 0.0;
     vec3 sky = heaven(p, vUv);
     sky = mix(sky, sky * vec3(0.66, 0.72, 0.9), aura * 0.75);
     vec3 room = mix(sky, hell(p, vUv), side);
 
     float m = person(vUv);
-    // How near your outline a point on you is (0 deep inside, 1 at the edge).
+    // How near your outline a point on you is (0 deep inside, 1 at the
+    // edge): two wide interleaved rings, eased, so the rim light is a soft
+    // band that follows the outline without its steps.
     float edge = hasMask > 0.5
-      ? clamp(1.0 - smoothstep(0.55, 0.98, ring(vUv, 14.0)), 0.0, 1.0)
+      ? 1.0 - smoothstep(0.45, 0.97,
+          ring(vUv, 9.0, 0.0) * 0.5 + ring(vUv, 16.0, 0.3927) * 0.5)
       : 0.0;
     // A green backdrop's spill along your outline, taken out (only strong
     // greens near the edge, so a green top keeps its colour).
@@ -192,7 +203,7 @@ const fragmentShader = /* glsl */ `
     vec3 dark = mix(vec3(l), cam, 0.8) * vec3(0.9, 0.62, 0.58);
     dark = pow(dark, vec3(1.12));
     vec3 devil = dark
-      + rimColor * edge * edge * 1.1
+      + rimColor * edge * edge * 1.0
       + fireColor * cam * smoothstep(0.6, 0.0, vUv.y) * 0.35;
 
     vec3 you = mix(angel, devil, side);

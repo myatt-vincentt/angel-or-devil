@@ -19,7 +19,7 @@ A soft glowing line splits the picture, and you, in half: half angel, half devil
 - Hold a full tilt about a second and that side takes over: the line sweeps off the edge with a
   burst (heaven: a white-gold flash and a puff of feathers; hell: a flame flare and a burst of
   embers). Straighten up and the line comes back.
-- Taps: a tap nudges the line toward the side you tap; a double tap recentres it.
+- Taps: a tap grows the side you tap, like leaning toward it; a double tap recentres it.
 - Hint: at the start, a small ghost head on a glass disc tilts side to side, the rim warming gold
   or red. It goes for good after your first real tilt. No text.
 - Both outfits are worn at once and each is clipped to its own side, so moving the line changes
@@ -43,7 +43,9 @@ A soft glowing line splits the picture, and you, in half: half angel, half devil
 - `Fangs.tsx` + `fangShape.ts`: the devil fangs, made in code, placed every frame on lip
   landmarks from the SDK's face rig (upper pair on the upper lip, lower pair on the jaw).
 - `Wings.tsx`: the wings on the SDK's canonical torso frame (fitted to the shoulders), hidden
-  behind you by the portrait mask.
+  behind you by a smoothed portrait mask. They follow only part of the shoulders' turn, stop
+  growing once the shoulders fill more than about half the picture, and each folds toward its
+  root as it turns edge-on (`Part.tsx`).
 - Dev only: ← / → nudge the line, 0 recentres it, [ / ] fake a head tilt in 5° steps, \ lets
   go of it, O holds the mouth open for the models' face triggers; `window.__split` is the line
   (`x`, `target`, `roll`, `takeover`, and `fakeRoll` to fake a tilt).

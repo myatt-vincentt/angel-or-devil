@@ -14,6 +14,7 @@ import {
 
 import { control } from "./Control";
 import { live } from "./live";
+import { shared } from "./split";
 import { SPRITES } from "./sprites";
 
 /** Seconds each part lasts. */
@@ -33,6 +34,8 @@ const flashFragment = /* glsl */ `
   uniform float side;
   uniform vec2 origin;
   uniform float aspect;
+  uniform sampler2D personMask;
+  uniform float hasMask;
   varying vec2 vUv;
 
   float hash(vec2 p) {
@@ -68,12 +71,12 @@ const flashFragment = /* glsl */ `
     vec2 o = vec2(origin.x * 0.5 * aspect, origin.y * 0.5);
     vec3 col;
     if (side < 0.5) {
-      // Heaven: a soft white-gold bloom from the head, washing the picture.
+      // Heaven: a soft white-gold bloom from the head, warming the picture.
       float d = length(p - o);
-      col = vec3(1.0, 0.93, 0.74) * (exp(-d * 3.0) * 1.1 + 0.28);
+      col = vec3(1.0, 0.9, 0.68) * (exp(-d * 3.0) * 0.55 + 0.14);
     } else {
       // Hell: flames leap up from the bottom, then sink back.
-      float h = 0.2 + 0.75 * (1.0 - k) * (1.0 - k);
+      float h = 0.2 + 0.6 * (1.0 - k) * (1.0 - k);
       float f = fbm(vec2(vUv.x * 5.0, vUv.y * 2.5 - age * 3.5));
       float flame = smoothstep(h, h * 0.35, vUv.y - (f - 0.5) * 0.45);
       col = mix(vec3(0.95, 0.1, 0.02), vec3(1.0, 0.7, 0.2), f * f * 1.6)
@@ -81,6 +84,9 @@ const flashFragment = /* glsl */ `
       // And a red glow round the edges.
       col += vec3(0.75, 0.05, 0.0) * smoothstep(0.25, 0.7, length(p)) * 0.8;
     }
+    // Lighter over you, so your face stays readable at the peak.
+    float on = hasMask > 0.5 ? texture2D(personMask, vUv).g : 0.0;
+    col *= mix(1.0, side < 0.5 ? 0.45 : 0.35, on);
     gl_FragColor = vec4(col * fade, 1.0);
   }
 `;
@@ -171,6 +177,8 @@ export const Burst = () => {
       origin: { value: [0, 0.3] },
       aspect: { value: 9 / 16 },
       pixelRatio: { value: 1 },
+      personMask: shared.mask,
+      hasMask: { value: 0 },
     }),
     [],
   );
@@ -190,6 +198,7 @@ export const Burst = () => {
     u.age.value = state.at < 0 ? 100 : now - state.at;
     u.aspect.value = st.size.width / Math.max(1, st.size.height);
     u.pixelRatio.value = gl.getPixelRatio();
+    u.hasMask.value = shared.mask.value ? 1 : 0;
   });
 
   return (

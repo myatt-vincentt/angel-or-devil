@@ -102,16 +102,18 @@ describe("stepSplit", () => {
 });
 
 describe("tapSplit", () => {
-  it("nudges toward the side tapped, adds to the tilt, and stays in range", () => {
+  it("grows the side tapped (like leaning toward it), adds to the tilt, and stays in range", () => {
     const s = createSplitState();
     tapSplit(s, 0.2, 1);
     stepSplit(s, 0, 1);
-    expect(s.target).toBeCloseTo(0.5 - TILT.nudge);
+    // Tapping the heaven half (left) moves the line right: more angel.
+    expect(s.target).toBeCloseTo(0.5 + TILT.nudge);
+    expect(Math.sign(s.target - 0.5)).toBe(Math.sign(tiltToOffset(15)));
     tapSplit(s, 0.8, 2);
     tapSplit(s, 0.8, 3);
     stepSplit(s, 0, 3);
-    expect(s.target).toBeCloseTo(0.5 + TILT.nudge);
-    for (let i = 0; i < 10; i += 1) tapSplit(s, 0.9, 4 + i);
+    expect(s.target).toBeCloseTo(0.5 - TILT.nudge);
+    for (let i = 0; i < 10; i += 1) tapSplit(s, 0.1, 4 + i);
     stepSplit(s, 20, 20);
     expect(s.target).toBeCloseTo(0.9);
   });

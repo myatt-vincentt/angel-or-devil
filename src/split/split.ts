@@ -50,6 +50,21 @@ export type Side = "angel" | "devil";
 const patched = new WeakSet<Material>();
 
 /**
+ * Hidden where you are: the mask is averaged over a small disc first, so the
+ * cut follows a smooth outline rather than the segmenter's stair steps.
+ */
+const BEHIND = `{
+  vec2 mUv = gl_FragCoord.xy / personMaskSize;
+  vec2 px = 3.0 / personMaskSize;
+  float mk = texture2D(personMask, mUv).g * 0.2;
+  for (int i = 0; i < 8; i++) {
+    float a = float(i) * 0.7854;
+    mk += texture2D(personMask, mUv + vec2(cos(a), sin(a)) * px).g * 0.1;
+  }
+  if (mk > 0.5) discard;
+}`;
+
+/**
  * Keeps a material on its own side of the line (and, for things that hang
  * behind you, out of wherever the portrait mask says you are).
  */
@@ -79,7 +94,7 @@ export const keepToSide = (
         "#include <clipping_planes_fragment>",
         `#include <clipping_planes_fragment>
 if (splitX - gl_FragCoord.x / personMaskSize.x ${cut}) discard;
-${behindPerson ? "if (texture2D(personMask, gl_FragCoord.xy / personMaskSize).g > 0.5) discard;" : ""}`,
+${behindPerson ? BEHIND : ""}`,
       );
     /* eslint-enable no-param-reassign */
   };

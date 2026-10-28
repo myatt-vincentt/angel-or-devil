@@ -9,6 +9,7 @@ import {
   AnimationMixer,
   Box3,
   LoopRepeat,
+  Quaternion,
   Vector3,
   type AnimationClip,
   type Group,
@@ -161,6 +162,21 @@ const prepare = (
 };
 
 const POP = 0.3; // s
+
+/**
+ * Edge-on folding: how squarely a wing faces the camera (|cos|) where it
+ * starts to fold, and where it is fully open; and how fast it follows.
+ */
+const EDGE_ON = [0.25, 0.6] as const;
+const EDGE_EASE = 8;
+const edgeQ = new Quaternion();
+const edgeP = new Vector3();
+const edgeN = new Vector3();
+const edgeV = new Vector3();
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 /** House motion: strict ease-out, never an overshoot. */
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
@@ -228,7 +244,12 @@ export const Part = ({ part }: { part: PartSpec }) => {
       mixer,
       value.animations,
     );
-    return { root, centre, mixer, rig };
+    // Wings that fold away when they turn edge-on (see `edgeOn`).
+    const edges = (part.edgeOn ?? [])
+      .map((n) => root.getObjectByName(n))
+      .filter((o): o is Object3D => !!o)
+      .map((bone) => ({ bone, base: bone.scale.clone(), k: 1 }));
+    return { root, centre, mixer, rig, edges };
   }, [value, spare, part]);
 
   useEffect(
@@ -242,6 +263,21 @@ export const Part = ({ part }: { part: PartSpec }) => {
     if (!model || !holder.current) return;
     model.rig(live.override ?? live.blendshapes);
     model.mixer.update(Math.min(dt, 0.1));
+    // A wing seen edge-on is a hard white sliver: it folds toward its root
+    // as it turns away from the camera, and opens again as it turns back.
+    model.edges.forEach((e) => {
+      e.bone.getWorldQuaternion(edgeQ);
+      e.bone.getWorldPosition(edgeP);
+      const facing = Math.abs(
+        edgeN
+          .set(0, 0, 1)
+          .applyQuaternion(edgeQ)
+          .dot(edgeV.copy(state.camera.position).sub(edgeP).normalize()),
+      );
+      const want = smoothstep(EDGE_ON[0], EDGE_ON[1], facing);
+      e.k += (want - e.k) * (1 - Math.exp(-EDGE_EASE * Math.min(dt, 0.1)));
+      e.bone.scale.copy(e.base).multiplyScalar(Math.max(1e-3, e.k));
+    });
     const now = state.clock.elapsedTime;
     if (born.current < 0) born.current = now;
     const k = Math.min(1, (now - born.current) / POP);
