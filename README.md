@@ -8,6 +8,7 @@ you; hold a full tilt for a second and that side takes over with a burst of feat
 Straighten up and you are half and half again. No camera tilt? Tap a side to grow it, double-tap
 to recentre.
 
+- Thumbnail: `public/images/angel-or-devil-thumbnail.jpg` (the share image).
 - The line (`src/split/split.ts`) is read by everything: the backgrounds and skin lights
   (`World.tsx`, one full-screen pass with the portrait mask), the feathers and embers
   (`Particles.tsx`), the seam itself (`Seam.tsx`) and the pieces you wear, each clipped to its side.
